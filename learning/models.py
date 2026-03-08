@@ -43,3 +43,27 @@ class Course(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Module(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField()
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='modules',
+    )
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['course', 'order'],
+                name='unique_module_order_within_course',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.course.title} / {self.title}'
