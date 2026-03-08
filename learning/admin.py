@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from .models import Course
+from .models import Course, StudyArea
+
+
+@admin.register(StudyArea)
+class StudyAreaAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': {'name'}}
 
 
 @admin.register(Course)
