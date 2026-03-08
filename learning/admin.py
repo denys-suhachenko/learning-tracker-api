@@ -5,7 +5,7 @@ from .models import Course, StudyArea
 
 @admin.register(StudyArea)
 class StudyAreaAdmin(admin.ModelAdmin):
-    prepopulated_fields = {'slug': {'name'}}
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Course)
