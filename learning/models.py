@@ -1,7 +1,11 @@
+import uuid
 from django.db import models
+from django.db.models import Max
 
 
 class StudyArea(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
@@ -13,6 +17,8 @@ class StudyArea(models.Model):
 
 
 class Course(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PUBLISHED = 'active', 'Active'
@@ -46,6 +52,8 @@ class Course(models.Model):
 
 
 class Module(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
@@ -70,6 +78,8 @@ class Module(models.Model):
 
 
 class Lesson(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     module = models.ForeignKey(
         Module,
         on_delete=models.CASCADE,

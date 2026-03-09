@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import StudyArea, Course, Module, Lesson
+
+from .models import Course, Lesson, Module, StudyArea
 
 
 class StudyAreaSerializer(serializers.ModelSerializer):
