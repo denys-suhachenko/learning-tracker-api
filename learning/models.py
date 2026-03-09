@@ -66,7 +66,7 @@ class Module(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.course.title} / {self.title}'
+        return f'{self.title} / {self.course.title}'
 
 
 class Lesson(models.Model):
@@ -92,4 +92,4 @@ class Lesson(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.module.title} / {self.title}'
+        return f'{self.title} / {self.module.title}'

@@ -1,6 +1,5 @@
 from rest_framework import serializers
-
-from .models import Course, Lesson, Module, StudyArea
+from .models import StudyArea, Course, Module, Lesson
 
 
 class StudyAreaSerializer(serializers.ModelSerializer):
@@ -14,6 +13,7 @@ class LessonSerializer(serializers.ModelSerializer):
         model = Lesson
         fields = (
             'id',
+            'module',
             'title',
             'description',
             'content',
@@ -22,23 +22,37 @@ class LessonSerializer(serializers.ModelSerializer):
         )
 
 
-class ModuleSerializer(serializers.ModelSerializer):
-    lessons = LessonSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Module
+class LessonNestedSerializer(LessonSerializer):
+    class Meta(LessonSerializer.Meta):
         fields = (
             'id',
             'title',
             'description',
             'order',
-            'lessons',
+            'estimated_minutes',
         )
 
 
-class CourseListSerializer(serializers.ModelSerializer):
-    study_area = StudyAreaSerializer(read_only=True)
+class ModuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Module
+        fields = (
+            'id',
+            'course',
+            'title',
+            'description',
+            'order',
+        )
 
+
+class ModuleDetailSerializer(ModuleSerializer):
+    lessons = LessonNestedSerializer(many=True, read_only=True)
+
+    class Meta(ModuleSerializer.Meta):
+        fields = ModuleSerializer.Meta.fields + ('lessons',)
+
+
+class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = (
@@ -46,17 +60,19 @@ class CourseListSerializer(serializers.ModelSerializer):
             'title',
             'slug',
             'description',
-            'status',
             'study_area',
+            'status',
+            'created_at',
+            'updated_at',
         )
+        read_only_fields = ('created_at', 'updated_at')
 
 
-class CourseDetailSerializer(serializers.ModelSerializer):
+class CourseDetailSerializer(CourseSerializer):
     study_area = StudyAreaSerializer(read_only=True)
-    modules = ModuleSerializer(many=True, read_only=True)
+    modules = ModuleDetailSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Course
+    class Meta(CourseSerializer.Meta):
         fields = (
             'id',
             'title',
