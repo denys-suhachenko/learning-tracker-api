@@ -46,15 +46,15 @@ class Course(models.Model):
 
 
 class Module(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    order = models.PositiveIntegerField()
-
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
         related_name='modules',
     )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField()
 
     class Meta:
         ordering = ['order', 'id']
@@ -67,3 +67,29 @@ class Module(models.Model):
 
     def __str__(self):
         return f'{self.course.title} / {self.title}'
+
+
+class Lesson(models.Model):
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        related_name='lessons',
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    content = models.TextField(blank=True)
+    order = models.PositiveIntegerField()
+    estimated_minutes = models.PositiveIntegerField(default=15)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['module', 'order'],
+                name='unique_lesson_order_within_module',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.module.title} / {self.title}'
