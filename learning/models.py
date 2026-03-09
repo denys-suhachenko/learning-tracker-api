@@ -1,4 +1,5 @@
 import uuid
+
 from django.db import models
 from django.db.models import Max
 
@@ -73,6 +74,17 @@ class Module(models.Model):
             )
         ]
 
+    def save(self, *args, **kwargs):
+        if self.order is None:
+            max_order = (
+                Module.objects.filter(course=self.course)
+                .aggregate(max_order=Max('order'))
+                .get('max_order')
+            )
+            self.order = 1 if max_order is None else max_order + 1
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.title} / {self.course.title}'
 
@@ -100,6 +112,17 @@ class Lesson(models.Model):
                 name='unique_lesson_order_within_module',
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if self.order is None:
+            max_order = (
+                Lesson.objects.filter(module=self.module)
+                .aggregate(max_order=Max('order'))
+                .get('max_order')
+            )
+            self.order = 1 if max_order is None else max_order + 1
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.title} / {self.module.title}'
