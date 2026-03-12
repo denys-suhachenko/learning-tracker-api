@@ -25,13 +25,13 @@ class LessonSerializer(serializers.ModelSerializer):
             'content',
             'order',
             'estimated_minutes',
+            'status',
         )
 
 
 class LessonNestedSerializer(LessonSerializer):
-    module_id = serializers.UUIDField(source='module_id', read_only=True)
-
-    class Meta(LessonSerializer.Meta):
+    class Meta:
+        model = Lesson
         fields = (
             'id',
             'module_id',
@@ -39,6 +39,7 @@ class LessonNestedSerializer(LessonSerializer):
             'description',
             'order',
             'estimated_minutes',
+            'status',
         )
 
 
@@ -59,8 +60,21 @@ class ModuleSerializer(serializers.ModelSerializer):
         )
 
 
+class ModuleNestedSerializer(serializers.ModelSerializer):
+    lessons = LessonNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Module
+        fields = (
+            'id',
+            'title',
+            'order',
+            'lessons',
+        )
+
+
 class ModuleDetailSerializer(ModuleSerializer):
-    course_id = serializers.UUIDField(source='course_id', read_only=True)
+    course_id = serializers.UUIDField(read_only=True)
     lessons = LessonNestedSerializer(many=True, read_only=True)
 
     class Meta:
@@ -76,12 +90,7 @@ class ModuleDetailSerializer(ModuleSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    study_area_id = serializers.PrimaryKeyRelatedField(
-        source='study_area',
-        queryset=StudyArea.objects.all(),
-        allow_null=True,
-        required=False,
-    )
+    study_area = StudyAreaSerializer(read_only=True)
 
     class Meta:
         model = Course
@@ -90,7 +99,7 @@ class CourseSerializer(serializers.ModelSerializer):
             'title',
             'slug',
             'description',
-            'study_area_id',
+            'study_area',
             'status',
             'created_at',
             'updated_at',
@@ -99,7 +108,6 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseDetailSerializer(CourseSerializer):
-    study_area_id = serializers.UUIDField(source='study_area_id', read_only=True)
     study_area = StudyAreaSerializer(read_only=True)
     modules = ModuleDetailSerializer(many=True, read_only=True)
 
@@ -110,7 +118,7 @@ class CourseDetailSerializer(CourseSerializer):
             'slug',
             'description',
             'status',
-            'study_area_id',
+            'study_area',
             'modules',
             'created_at',
             'updated_at',

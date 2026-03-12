@@ -22,7 +22,7 @@ class Course(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
-        PUBLISHED = 'active', 'Active'
+        ACTIVE = 'active', 'Active'
 
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
@@ -63,7 +63,7 @@ class Module(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    order = models.PositiveIntegerField()
+    order = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ['order', 'id']
@@ -92,6 +92,11 @@ class Module(models.Model):
 class Lesson(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
+    class Status(models.TextChoices):
+        PLANNED = 'planned', 'Planned'
+        IN_PROGRESS = 'in_progress', 'In Progress'
+        COMPLETED = 'completed', 'Completed'
+
     module = models.ForeignKey(
         Module,
         on_delete=models.CASCADE,
@@ -101,8 +106,14 @@ class Lesson(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     content = models.TextField(blank=True)
-    order = models.PositiveIntegerField()
+    order = models.PositiveIntegerField(null=True, blank=True)
     estimated_minutes = models.PositiveIntegerField(default=15)
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PLANNED,
+    )
 
     class Meta:
         ordering = ['order', 'id']

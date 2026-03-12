@@ -53,7 +53,15 @@ class ModuleViewSet(viewsets.ModelViewSet):
 
 
 class LessonViewSet(viewsets.ModelViewSet):
-    queryset = Lesson.objects.select_related('module', 'module__course').order_by(
-        'module_id', 'order', 'id'
-    )
+    def get_queryset(self):
+        queryset = Lesson.objects.select_related('module', 'module__course').order_by(
+            'module_id', 'order', 'id'
+        )
+        course_id = self.request.query_params.get('course_id')
+
+        if course_id:
+            queryset = queryset.filter(module__course_id=course_id)
+
+        return queryset.order_by('module__order', 'order')
+
     serializer_class = LessonSerializer
