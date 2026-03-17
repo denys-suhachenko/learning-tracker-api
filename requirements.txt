@@ -9,3 +9,4 @@ psycopg==3.3.3
 psycopg-binary==3.3.3
 ruff==0.15.5
 sqlparse==0.5.5
+whitenoise==6.12.0
