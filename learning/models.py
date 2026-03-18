@@ -15,7 +15,7 @@ class StudyArea(models.Model):
     )
 
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
 
     class Meta:
         ordering = ['name']

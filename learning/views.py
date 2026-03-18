@@ -13,8 +13,14 @@ from .serializers import (
 
 
 class StudyAreaViewSet(ModelViewSet):
-    queryset = StudyArea.objects.all()
     serializer_class = StudyAreaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return StudyArea.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class CourseViewSet(ModelViewSet):
