@@ -4,6 +4,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from .models import Course, Lesson, Module, StudyArea
 from .serializers import (
+    CourseDetailSerializer,
     CourseSerializer,
     LessonSerializer,
     ModuleSerializer,
@@ -17,11 +18,19 @@ class StudyAreaViewSet(ModelViewSet):
 
 
 class CourseViewSet(ModelViewSet):
-    serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Course.objects.filter(owner=self.request.user)
+        return (
+            Course.objects.filter(owner=self.request.user)
+            .select_related('study_area')
+            .prefetch_related('modules', 'modules__lessons')
+        )
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return CourseDetailSerializer
+        return CourseSerializer
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
