@@ -1,67 +1,55 @@
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 
 from .models import Course, Lesson, Module, StudyArea
 from .serializers import (
-    CourseDetailSerializer,
     CourseSerializer,
-    LessonNestedSerializer,
     LessonSerializer,
-    ModuleDetailSerializer,
     ModuleSerializer,
     StudyAreaSerializer,
 )
 
 
-class StudyAreaViewSet(viewsets.ModelViewSet):
+class StudyAreaViewSet(ModelViewSet):
     queryset = StudyArea.objects.all()
     serializer_class = StudyAreaSerializer
 
 
-class CourseViewSet(viewsets.ModelViewSet):
+class CourseViewSet(ModelViewSet):
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return Course.objects.select_related('study_area').prefetch_related(
-                'modules__lessons'
-            )
-        return Course.objects.select_related('study_area').all()
+        return Course.objects.filter(owner=self.request.user)
 
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return CourseDetailSerializer
-        return CourseSerializer
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
-class ModuleViewSet(viewsets.ModelViewSet):
-    queryset = (
-        Module.objects.select_related('course')
-        .prefetch_related('lessons')
-        .order_by('course_id', 'order', 'id')
-    )
+class ModuleViewSet(ModelViewSet):
+    serializer_class = ModuleSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ModuleDetailSerializer
-        return ModuleSerializer
-
-    @action(detail=True, methods=['get'])
-    def lessons(self, request, pk=None):
-        module = self.get_object()
-        serializer = LessonNestedSerializer(module.lessons.all(), many=True)
-        return Response(serializer.data)
-
-
-class LessonViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        queryset = Lesson.objects.select_related('module', 'module__course').order_by(
-            'module_id', 'order', 'id'
-        )
-        course_id = self.request.query_params.get('course_id')
+        return Module.objects.filter(course__owner=self.request.user)
 
-        if course_id:
-            queryset = queryset.filter(module__course_id=course_id)
+    def perform_create(self, serializer):
+        course = serializer.validated_data['course']
+        if course.owner != self.request.user:
+            raise PermissionDenied('You cannot add modules to this course.')
+        serializer.save()
 
-        return queryset.order_by('module__order', 'order')
 
+class LessonViewSet(ModelViewSet):
     serializer_class = LessonSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Lesson.objects.filter(module__course__owner=self.request.user)
+
+    def perform_create(self, serializer):
+        module = serializer.validated_data['module']
+        if module.course.owner != self.request.user:
+            raise PermissionDenied('You cannot add lessons to this module.')
+        serializer.save()
