@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+import subprocess
 import sentry_sdk
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,6 +24,42 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 SENTRY_DSN = env('SENTRY_DSN')
 DJANGO_ENV = env('DJANGO_ENV', default='development')
+
+
+# Sentry initialization
+# https://docs.sentry.io/platforms/python/integrations/django/
+
+
+# Defines release-version
+def get_release():
+    release = env('SENTRY_RELEASE')
+
+    if release:
+        return release
+
+    try:
+        return (
+            subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+            .decode('utf-8')
+            .strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=DJANGO_ENV,
+        release=get_release(),
+        # Performance tracing: 0.1 = 10% requests
+        # For learning project with small traffic - 1.0
+        traces_sample_rate=1.0,
+        # Add data like request headers and IP for users
+        # https://docs.sentry.io/platforms/python/data-management/data-collected/
+        send_default_pii=True,
+    )
+
 
 # Application definition
 
@@ -157,18 +194,3 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
 
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
-
-# Sentry initialization
-# https://docs.sentry.io/platforms/python/integrations/django/
-
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        environment=DJANGO_ENV,
-        # Performance tracing: 0.1 = 10% requests
-        # For learning project with small traffic - 1.0
-        traces_sample_rate=1.0,
-        # Add data like request headers and IP for users
-        # https://docs.sentry.io/platforms/python/data-management/data-collected/
-        send_default_pii=True,
-    )
