@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'drf_spectacular',
     'learning',
     'users',
 ]
@@ -116,6 +117,24 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Learning Tracker API',
+    'VERSION': '0.1.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'CourseStatusEnum': [
+            ('draft', 'Draft'),
+            ('active', 'Active'),
+        ],
+        'LessonStatusEnum': [
+            ('planned', 'Planned'),
+            ('in_progress', 'In Progress'),
+            ('completed', 'Completed'),
+        ],
+    },
 }
 
 SIMPLE_JWT = {

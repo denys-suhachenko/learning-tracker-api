@@ -37,9 +37,16 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id',
-            'username',
             'email',
-            'is_staff',
             'first_name',
             'last_name',
         )
+
+
+class AuthTokensSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+
+
+class LogoutResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()

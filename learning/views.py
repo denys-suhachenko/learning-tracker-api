@@ -1,10 +1,13 @@
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Course, Lesson, Module, StudyArea
 from .serializers import (
+    CourseDetailReadSerializer,
     CourseDetailSerializer,
+    CourseReadSerializer,
     CourseSerializer,
     LessonSerializer,
     ModuleSerializer,
@@ -23,6 +26,13 @@ class StudyAreaViewSet(ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
+@extend_schema_view(
+    list=extend_schema(responses=CourseReadSerializer(many=True)),
+    retrieve=extend_schema(responses=CourseDetailReadSerializer),
+    create=extend_schema(responses=CourseReadSerializer),
+    update=extend_schema(responses=CourseReadSerializer),
+    partial_update=extend_schema(responses=CourseReadSerializer),
+)
 class CourseViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
