@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+import sentry_sdk
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,6 +20,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
+SENTRY_DSN = env('SENTRY_DSN')
+DJANGO_ENV = env('DJANGO_ENV', default='development')
 
 # Application definition
 
@@ -153,3 +157,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
 
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
+# Sentry initialization
+# https://docs.sentry.io/platforms/python/integrations/django/
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=DJANGO_ENV,
+        # Performance tracing: 0.1 = 10% requests
+        # For learning project with small traffic - 1.0
+        traces_sample_rate=1.0,
+        # Add data like request headers and IP for users
+        # https://docs.sentry.io/platforms/python/data-management/data-collected/
+        send_default_pii=True,
+    )
