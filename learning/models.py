@@ -76,6 +76,20 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def progress(self):
+        lessons = [
+            lesson
+            for module in self.modules.all()
+            for lesson in module.lessons.all()
+        ]
+        if not lessons:
+            return 0
+        completed = sum(
+            1 for lesson in lessons if lesson.status == Lesson.Status.COMPLETED
+        )
+        return round((completed / len(lessons)) * 100)
+
 
 class Module(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

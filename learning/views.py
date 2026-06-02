@@ -78,3 +78,8 @@ class LessonViewSet(ModelViewSet):
         if module.course.owner != self.request.user:
             raise PermissionDenied('You cannot add lessons to this module.')
         serializer.save()
+
+    def perform_update(self, serializer):
+        if serializer.instance.module.course.owner != self.request.user:
+            raise PermissionDenied('You cannot update this lesson.')
+        serializer.save()

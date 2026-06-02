@@ -1,8 +1,8 @@
+import subprocess
 from datetime import timedelta
 from pathlib import Path
 
 import environ
-import subprocess
 import sentry_sdk
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

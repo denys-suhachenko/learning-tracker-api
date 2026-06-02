@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Course, Lesson, Module, StudyArea
@@ -9,14 +10,24 @@ class StudyAreaSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'slug')
 
 
+class ModuleRefSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+
+
 class LessonSerializer(serializers.ModelSerializer):
-    module = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all())
+    module = serializers.PrimaryKeyRelatedField(
+        queryset=Module.objects.all(),
+        write_only=True,
+    )
+    module_ref = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Lesson
         fields = (
             'id',
             'module',
+            'module_ref',
             'title',
             'description',
             'content',
@@ -25,6 +36,10 @@ class LessonSerializer(serializers.ModelSerializer):
             'status',
         )
 
+    @extend_schema_field(ModuleRefSerializer)
+    def get_module_ref(self, obj):
+        return {'id': str(obj.module.id), 'title': obj.module.title}
+
 
 class LessonNestedSerializer(LessonSerializer):
     class Meta:
@@ -32,6 +47,7 @@ class LessonNestedSerializer(LessonSerializer):
         fields = (
             'id',
             'module',
+            'module_ref',
             'title',
             'description',
             'content',
@@ -92,6 +108,7 @@ class CourseSerializer(serializers.ModelSerializer):
         queryset=StudyArea.objects.all(),
         allow_null=True,
     )
+    progress = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Course
@@ -102,6 +119,7 @@ class CourseSerializer(serializers.ModelSerializer):
             'description',
             'study_area',
             'status',
+            'progress',
             'created_at',
             'updated_at',
         )
@@ -128,6 +146,7 @@ class CourseDetailSerializer(CourseSerializer):
             'description',
             'status',
             'study_area',
+            'progress',
             'modules',
             'created_at',
             'updated_at',
@@ -136,6 +155,7 @@ class CourseDetailSerializer(CourseSerializer):
 
 class CourseReadSerializer(serializers.ModelSerializer):
     study_area = StudyAreaSerializer()
+    progress = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Course
@@ -146,6 +166,7 @@ class CourseReadSerializer(serializers.ModelSerializer):
             'description',
             'study_area',
             'status',
+            'progress',
             'created_at',
             'updated_at',
         )
@@ -162,6 +183,7 @@ class CourseDetailReadSerializer(CourseReadSerializer):
             'description',
             'status',
             'study_area',
+            'progress',
             'modules',
             'created_at',
             'updated_at',
