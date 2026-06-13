@@ -1,5 +1,9 @@
+from zoneinfo import available_timezones
+
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
+
+from users.models import UserSettings
 
 User = get_user_model()
 
@@ -41,6 +45,10 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
         )
+        read_only_fields = [
+            'id',
+            'email',
+        ]
 
 
 class AuthTokensSerializer(serializers.Serializer):
@@ -50,3 +58,22 @@ class AuthTokensSerializer(serializers.Serializer):
 
 class LogoutResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'language',
+            'timezone',
+            'theme',
+            'accent_color',
+            'density',
+            'sidebar_behavior',
+            'animations_enabled',
+        ]
+
+    def validate_timezone(self, value):
+        if value not in available_timezones():
+            raise serializers.ValidationError('Invalid timezone.')
+        return value

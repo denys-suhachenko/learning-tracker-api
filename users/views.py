@@ -6,11 +6,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from users.models import UserSettings
+
 from .serializers import (
     AuthTokensSerializer,
     LogoutResponseSerializer,
     RegisterSerializer,
     UserSerializer,
+    UserSettingsSerializer,
 )
 
 User = get_user_model()
@@ -54,9 +57,18 @@ class LogoutView(APIView):
         return Response({'message': 'Logged out'})
 
 
-class MeView(APIView):
+class MeView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(responses=UserSerializer)
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
+    def get_object(self):
+        return self.request.user
+
+
+class MySettingsView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSettingsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        settings, _ = UserSettings.objects.get_or_create(user=self.request.user)
+        return settings
