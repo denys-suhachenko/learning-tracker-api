@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'drf_spectacular',
+    'strawberry_django',
     'learning',
     'users',
 ]
