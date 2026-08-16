@@ -1,10 +1,14 @@
+from django.db.models import Count, F, Q
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Course, Lesson, Module, StudyArea
 from .serializers import (
+    ContinueLearningCourseSerializer,
     CourseDetailReadSerializer,
     CourseDetailSerializer,
     CourseReadSerializer,
@@ -50,6 +54,82 @@ class CourseViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='continue-learning',
+    )
+    def continue_learning(self, request):
+        courses = (
+            Course.objects.filter(
+                owner=request.user,
+                status=Course.Status.ACTIVE,
+            )
+            .annotate(
+                total_lessons=Count(
+                    'modules__lessons',
+                    distinct=True,
+                ),
+                completed_lessons=Count(
+                    'modules__lessons',
+                    filter=Q(modules__lessons__status=Lesson.Status.COMPLETED),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                total_lessons__gt=0,
+                completed_lessons__lt=F('total_lessons'),
+            )
+            .prefetch_related(
+                'modules',
+                'modules__lessons',
+            )
+            .order_by('-updated_at')[:3]
+        )
+
+        serializer = ContinueLearningCourseSerializer(
+            courses,
+            many=True,
+        )
+
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='summary',
+    )
+    def summary(self, request):
+        courses = Course.objects.filter(
+            owner=request.user,
+        )
+
+        active_courses = courses.filter(
+            status=Course.Status.ACTIVE,
+        ).count()
+
+        courses_in_progress = (
+            courses.filter(
+                status=Course.Status.ACTIVE,
+                modules__lessons__status=Lesson.Status.IN_PROGRESS,
+            )
+            .distinct()
+            .count()
+        )
+
+        lessons_completed = Lesson.objects.filter(
+            module__course__owner=request.user,
+            status=Lesson.Status.COMPLETED,
+        ).count()
+
+        return Response(
+            {
+                'active_courses': active_courses,
+                'courses_in_progress': courses_in_progress,
+                'lessons_completed': lessons_completed,
+            }
+        )
 
 
 class ModuleViewSet(ModelViewSet):

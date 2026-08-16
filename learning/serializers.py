@@ -188,3 +188,39 @@ class CourseDetailReadSerializer(CourseReadSerializer):
             'created_at',
             'updated_at',
         )
+
+
+class ContinueLearningCourseSerializer(serializers.ModelSerializer):
+    total_lessons = serializers.IntegerField(read_only=True)
+    completed_lessons = serializers.IntegerField(read_only=True)
+    progress = serializers.SerializerMethodField()
+    next_lesson = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = (
+            'id',
+            'title',
+            'description',
+            'progress',
+            'completed_lessons',
+            'total_lessons',
+            'next_lesson',
+        )
+
+    def get_progress(self, obj):
+        if obj.total_lessons == 0:
+            return 0
+
+        return round((obj.completed_lessons / obj.total_lessons) * 100)
+
+    def get_next_lesson(self, obj):
+        for module in obj.modules.all():
+            for lesson in module.lessons.all():
+                if lesson.status != Lesson.Status.COMPLETED:
+                    return {
+                        'id': str(lesson.id),
+                        'title': lesson.title,
+                    }
+
+        return None

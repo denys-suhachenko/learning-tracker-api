@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'strawberry_django',
     'learning',
     'users',
+    'reviews',
 ]
 
 MIDDLEWARE = [

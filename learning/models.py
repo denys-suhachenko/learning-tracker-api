@@ -36,6 +36,7 @@ class Course(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         ACTIVE = 'active', 'Active'
+        COMPLETED = 'completed', 'Completed'
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -79,9 +80,7 @@ class Course(models.Model):
     @property
     def progress(self):
         lessons = [
-            lesson
-            for module in self.modules.all()
-            for lesson in module.lessons.all()
+            lesson for module in self.modules.all() for lesson in module.lessons.all()
         ]
         if not lessons:
             return 0
@@ -89,6 +88,29 @@ class Course(models.Model):
             1 for lesson in lessons if lesson.status == Lesson.Status.COMPLETED
         )
         return round((completed / len(lessons)) * 100)
+
+    def sync_status(self):
+        if self.status == self.Status.DRAFT:
+            return
+
+        lessons = Lesson.objects.filter(
+            module__course=self,
+        )
+
+        if not lessons.exists():
+            new_status = self.Status.ACTIVE
+        elif lessons.exclude(
+            status=Lesson.Status.COMPLETED,
+        ).exists():
+            new_status = self.Status.ACTIVE
+        else:
+            new_status = self.Status.COMPLETED
+
+        if self.status != new_status:
+            self.status = new_status
+            self.save(
+                update_fields=['status', 'updated_at'],
+            )
 
 
 class Module(models.Model):
@@ -174,5 +196,16 @@ class Lesson(models.Model):
 
         super().save(*args, **kwargs)
 
+        self.module.course.sync_status()
+
     def __str__(self):
         return f'{self.title} / {self.module.title}'
+
+    def delete(self, *args, **kwargs):
+        course = self.module.course
+
+        result = super().delete(*args, **kwargs)
+
+        course.sync_status()
+
+        return result
