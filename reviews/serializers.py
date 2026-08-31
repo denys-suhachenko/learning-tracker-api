@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -165,7 +167,11 @@ class ReviewCardSerializer(serializers.ModelSerializer):
             False,
         )
 
-        validated_data['due_at'] = timezone.now() if review_next_session else None
+        now = timezone.now()
+
+        validated_data['due_at'] = (
+            now if review_next_session else now + timedelta(days=1)
+        )
 
         return super().create(validated_data)
 
